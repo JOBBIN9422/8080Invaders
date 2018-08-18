@@ -2,7 +2,7 @@ CC = g++
 CFLAGS = -g -Wall -std=c++11
 LDFLAGS = -lSDL2
 
-SOURCES = main.cpp CPU.cpp
+SOURCES = main.cpp CPU.cpp Game.cpp
 OBJECTS = $(SOURCES:.cpp = .o)
 TARGET = 8080emu
 

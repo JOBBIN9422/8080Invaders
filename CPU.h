@@ -29,17 +29,33 @@ class CPU
         bool interruptsEnabled;
 
         //64KB of memory
-        std::array<unsigned char, 65536> memory;
+        std::array<unsigned char, 0x10000> memory;
+        
+
 
     public:
         CPU(ushort startPC);
 
         void init();
-        void emulateCycle();
+        int emulateCycle();
         void readIntoMem(std::string filename, ushort startAddr);
         void incPC();
+
+        std::array<unsigned char, 0x10000>& getMemory();
+
         void handleIN();
         void handleOUT();
+        void setP1Left(bool on);
+        void setP1Right(bool on);
+        void setP1Fire(bool on);
+        void setP2Left(bool on);
+        void setP2Right(bool on);
+        void setP2Fire(bool on);
+        void setP1Start(bool on);
+        void setP2Start(bool on);
+        void setCoin(bool on);
+
+        void genInterrupt(int interruptNum);
 
         void debugPrint();
         void setByte(ushort addr, unsigned char data);

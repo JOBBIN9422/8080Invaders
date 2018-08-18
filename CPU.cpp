@@ -30,7 +30,7 @@ void CPU::init()
     this->flags.C = 0;
     this->flags.Z = 0;
     this->flags.P = 0;
-    this->interruptsEnabled = false;
+    this->interruptsEnabled = true;
 
     //clear memory
     for (uint i = 0; i < memory.size(); i++)
@@ -56,8 +56,8 @@ void CPU::setByte(ushort addr, unsigned char data)
 void CPU::debugPrint()
 {
     cout << "PC = " << setfill('0') << setw(4) << hex << PC << endl;
-    cout << "OP = " << setfill('0') << setw(4) << hex << (int)opcode << endl;
     cout << "SP = " << setfill('0') << setw(4) << hex << (int)SP << endl << endl;
+    cout << "OP = " << setfill('0') << setw(2) << hex << (int)opcode << endl << endl;
     cout << "A  = " << setfill('0') << setw(2) << hex << (int)A << endl;
     cout << "B  = " << setfill('0') << setw(2) << hex << (int)B << endl;
     cout << "C  = " << setfill('0') << setw(2) << hex << (int)C << endl;
@@ -68,1048 +68,1314 @@ void CPU::debugPrint()
     cout << "S  = " << setfill('0') << setw(2) << hex << (int)flags.S << endl;
     cout << "C  = " << setfill('0') << setw(2) << hex << (int)flags.C << endl;
     cout << "Z  = " << setfill('0') << setw(2) << hex << (int)flags.Z << endl;
-    cout << "P  = " << setfill('0') << setw(2) << hex << (int)flags.P << endl;
+    cout << "P  = " << setfill('0') << setw(2) << hex << (int)flags.P << endl << endl;
+    cout << "Read1 = " << setfill('0') << setw(2) << hex << (int)ports.read1 << endl;
+    cout << "Read2 = " << setfill('0') << setw(2) << hex << (int)ports.read2 << endl;
     cout << "--------------------" << endl;
 
 }
 
-void CPU::emulateCycle()
+int CPU::emulateCycle()
 {
     opcode = memory[PC];
     //debugPrint();
+    int cycles = 0;
 
     switch (opcode)
     {
         case 0x00:
             nop();
+            cycles = 4;
             break;
 
         case 0x01:
             lxiB();
+            cycles = 10;
             break;
 
         case 0x02:
             staxB();
+            cycles = 7;
             break;
 
         case 0x03:
             inxB();
+            cycles = 5;
             break;
 
         case 0x04:
             inrB();
+            cycles = 5;
             break;
 
         case 0x05: 
             dcrB();
+            cycles = 5;
             break;
 
         case 0x06: 
             mviB();
+            cycles = 7;
             break;
 
         case 0x07: 
             rlc();
+            cycles = 4;
             break;
 
         case 0x08: 
             nop();
+            cycles = 4;
             break;
 
         case 0x09: 
             dadB();
+            cycles = 10;
             break;
 
         case 0x0a: 
             ldaxB();
+            cycles = 7;
             break;
 
         case 0x0b: 
             dcxB();
+            cycles = 7;
             break;
 
         case 0x0c: 
             inrC();
+            cycles = 5;
             break;
 
         case 0x0d: 
             dcrC();
+            cycles = 5;
             break;
 
         case 0x0e: 
             mviC();
+            cycles = 7;
             break;
 
         case 0x0f: 
             rrc();
+            cycles = 4;
             break;
 
         case 0x10: 
             nop();
+            cycles = 4;
             break;
 
         case 0x11: 
             lxiD();
+            cycles = 10;
             break;
             
         case 0x12: 
             staxD();
+            cycles = 7;
             break;
 
         case 0x13: 
             inxD();
+            cycles = 5;
             break;
 
         case 0x14: 
             inrD();
+            cycles = 5;
             break;
 
         case 0x15: 
             dcrD();
+            cycles = 5;
             break;
 
         case 0x16: 
             mviD();
+            cycles = 7;
             break;
 
         case 0x17: 
             ral();
+            cycles = 4;
             break;
 
         case 0x18: 
             nop();
+            cycles = 4;
             break;
 
         case 0x19: 
             dadD();
+            cycles = 10;
             break;
 
         case 0x1a: 
             ldaxD();
+            cycles = 7;
             break;
 
         case 0x1b: 
             dcxD();
+            cycles = 5;
             break;
 
         case 0x1c: 
             inrE();
+            cycles = 5;
             break;
 
         case 0x1d: 
             dcrE();
+            cycles = 5;
             break;
 
         case 0x1e: 
             mviE();
+            cycles = 7;
             break;
 
         case 0x1f: 
             rar();
+            cycles = 4;
             break;
 
         case 0x20: 
             nop();
+            cycles = 4;
             break;
 
         case 0x21: 
             lxiH();
+            cycles = 10;
             break;
 
         case 0x22: 
             shld();
+            cycles = 16;
             break;
 
         case 0x23: 
             inxH();
+            cycles = 5;
             break;
 
         case 0x24: 
             inrH();
+            cycles = 5;
             break;
 
         case 0x25: 
             dcrH();
+            cycles = 5;
             break;
 
         case 0x26: 
             mviH();
+            cycles = 7;
             break;
 
         //DAA instruction (implement later?)
         case 0x27: 
             nop();
+            cycles = 4;
             break;
 
         case 0x28: 
             nop();
+            cycles = 4;
             break;
 
         case 0x29: 
             dadH();
+            cycles = 10;
             break;
 
         case 0x2a: 
             lhld();
+            cycles = 16;
             break;
 
         case 0x2b: 
             dcxH();
+            cycles = 5;
             break;
 
         case 0x2c: 
             inrL();
+            cycles = 5;
             break;
 
         case 0x2d: 
             dcrL();
+            cycles = 5;
             break;
 
         case 0x2e: 
             mviL();
+            cycles = 7;
             break;
 
         case 0x2f: 
             cma();
+            cycles = 4;
             break;
 
         case 0x30: 
             nop();
+            cycles = 4;
             break;
 
         case 0x31: 
             lxiSP();
+            cycles = 10;
             break;
 
         case 0x32: 
             sta();
+            cycles = 13;
             break;
 
         case 0x33: 
             inxSP();
+            cycles = 5;
             break;
 
         case 0x34: 
             inrM();
+            cycles = 10;
             break;
 
         case 0x35: 
             dcrM();
+            cycles = 10;
             break;
 
         case 0x36: 
             mviM();
+            cycles = 10;
             break;
 
         case 0x37: 
             ctc();
+            cycles = 4;
             break;
 
         case 0x38: 
             nop();
+            cycles = 4;
             break;
 
         case 0x39: 
             dadSP();
+            cycles = 10;
             break;
 
         case 0x3a: 
             lda();
+            cycles = 13;
             break;
 
         case 0x3b: 
             dcxSP();
+            cycles = 5;
             break;
 
         case 0x3c: 
             inrA();
+            cycles = 5;
             break;
 
         case 0x3d: 
             dcrA();
+            cycles = 5;
             break;
 
         case 0x3e: 
             mviA();
+            cycles = 7;
             break;
 
         case 0x3f: 
             cmc();
+            cycles = 4;
             break;
 
         case 0x40: 
             movBB();
+            cycles = 5;
             break;
 
         case 0x41: 
             movBC();
+            cycles = 5;
             break;
 
         case 0x42: 
             movBD();
+            cycles = 5;
             break;
 
         case 0x43: 
             movBE();
+            cycles = 5;
             break;
 
         case 0x44: 
             movBH();
+            cycles = 5;
             break;
 
         case 0x45: 
             movBL();
+            cycles = 5;
             break;
 
         case 0x46: 
             movBM();
+            cycles = 5;
             break;
 
         case 0x47: 
             movBA();
+            cycles = 5;
             break;
 
         case 0x48: 
             movCB();
+            cycles = 5;
             break;
 
         case 0x49: 
             movCC();
+            cycles = 5;
             break;
 
         case 0x4a: 
             movCD();
+            cycles = 5;
             break;
 
         case 0x4b: 
             movCE();
+            cycles = 5;
             break;
 
         case 0x4c: 
             movCH();
+            cycles = 5;
             break;
 
         case 0x4d: 
             movCL();
+            cycles = 5;
             break;
 
         case 0x4e: 
             movCM();
+            cycles = 5;
             break;
 
         case 0x4f: 
             movCA();
+            cycles = 5;
             break;
 
         case 0x50: 
             movDB();
+            cycles = 5;
             break;
 
         case 0x51: 
             movDC();
+            cycles = 5;
             break;
 
         case 0x52: 
             movDD();
+            cycles = 5;
             break;
 
         case 0x53: 
             movDE();
+            cycles = 5;
             break;
 
         case 0x54: 
             movDH();
+            cycles = 5;
             break;
             
         case 0x55: 
             movDL();
+            cycles = 5;
             break;
 
         case 0x56: 
             movDM();
+            cycles = 5;
             break;
 
         case 0x57: 
             movDA();
+            cycles = 5;
             break;
 
         case 0x58: 
             movEB();
+            cycles = 5;
             break;
 
         case 0x59: 
             movEC();
+            cycles = 5;
             break;
 
         case 0x5a: 
             movED();
+            cycles = 5;
             break;
 
         case 0x5b: 
             movEE();
+            cycles = 5;
             break;
 
         case 0x5c: 
             movEH();
+            cycles = 5;
             break;
 
         case 0x5d: 
             movEL();
+            cycles = 5;
             break;
 
         case 0x5e: 
             movEM();
+            cycles = 5;
             break;
 
         case 0x5f: 
             movEA();
+            cycles = 5;
             break;
 
         case 0x60: 
             movHB();
+            cycles = 5;
             break;
 
         case 0x61: 
             movHC();
+            cycles = 5;
             break;
 
         case 0x62: 
             movHD();
+            cycles = 5;
             break;
 
         case 0x63: 
             movHE();
+            cycles = 5;
             break;
 
         case 0x64: 
             movHH();
+            cycles = 5;
             break;
 
         case 0x65: 
             movHL();
+            cycles = 5;
             break;
 
         case 0x66: 
             movHM();
+            cycles = 5;
             break;
 
         case 0x67: 
             movHA();
+            cycles = 5;
             break;
 
         case 0x68: 
             movLB();
+            cycles = 5;
             break;
 
         case 0x69: 
             movLC();
+            cycles = 5;
             break;
 
         case 0x6a: 
             movLD();
+            cycles = 5;
             break;
 
         case 0x6b: 
             movLE();
+            cycles = 5;
             break;
 
         case 0x6c: 
             movLH();
+            cycles = 5;
             break;
 
         case 0x6d: 
             movLL();
+            cycles = 5;
             break;
 
         case 0x6e: 
             movLM();
+            cycles = 5;
             break;
 
         case 0x6f: 
             movLA();
+            cycles = 5;
             break;
 
         case 0x70: 
             movMB();
+            cycles = 5;
             break;
 
         case 0x71: 
             movMC();
+            cycles = 5;
             break;
 
         case 0x72: 
             movMD();
+            cycles = 5;
             break;
 
         case 0x73: 
             movME();
+            cycles = 5;
             break;
 
         case 0x74: 
             movMH();
+            cycles = 5;
             break;
 
         case 0x75: 
             movML();
+            cycles = 5;
             break;
 
         case 0x76: 
             nop();
+            cycles = 4;
             break;
 
         case 0x77: 
             movMA();
+            cycles = 5;
             break;
 
         case 0x78: 
             movAB();
+            cycles = 5;
             break;
             
         case 0x79: 
             movAC();
+            cycles = 5;
             break;
 
         case 0x7a: 
             movAD();
+            cycles = 5;
             break;
 
         case 0x7b: 
             movAE();
+            cycles = 5;
             break;
 
         case 0x7c: 
             movAH();
+            cycles = 5;
             break;
 
         case 0x7d: 
             movAL();
+            cycles = 5;
             break;
 
         case 0x7e: 
             movAM();
+            cycles = 5;
             break;
 
         case 0x7f: 
             movAA();
+            cycles = 5;
             break;
 
         case 0x80: 
             addB();
+            cycles = 4;
             break;
 
         case 0x81: 
             addC();
+            cycles = 4;
             break;
 
         case 0x82: 
             addD();
+            cycles = 4;
             break;
 
         case 0x83: 
             addE();
+            cycles = 4;
             break;
 
         case 0x84: 
             addH();
+            cycles = 4;
             break;
 
         case 0x85: 
             addL();
+            cycles = 4;
             break;
 
         case 0x86: 
             addM();
+            cycles = 4;
             break;
 
         case 0x87: 
             addA();
+            cycles = 4;
             break;
 
         case 0x88: 
             adcB();
+            cycles = 4;
             break;
 
         case 0x89: 
             adcC();
+            cycles = 4;
             break;
 
         case 0x8a: 
             adcD();
+            cycles = 4;
             break;
 
         case 0x8b: 
             adcE();
+            cycles = 4;
             break;
 
         case 0x8c: 
             adcH();
+            cycles = 4;
             break;
 
         case 0x8d: 
             adcL();
+            cycles = 4;
             break;
 
         case 0x8e: 
             adcM();
+            cycles = 4;
             break;
 
         case 0x8f: 
             adcA();
+            cycles = 4;
             break;
 
         case 0x90: 
             subB();
+            cycles = 4;
             break;
 
         case 0x91: 
             subC();
+            cycles = 4;
             break;
 
         case 0x92: 
             subD();
+            cycles = 4;
             break;
 
         case 0x93: 
             subE();
+            cycles = 4;
             break;
 
         case 0x94: 
             subH();
+            cycles = 4;
             break;
 
         case 0x95: 
             subL();
+            cycles = 4;
             break;
 
         case 0x96: 
             subM();
+            cycles = 4;
             break;
 
         case 0x97: 
             subA();
+            cycles = 4;
             break;
 
         case 0x98: 
             sbbB();
+            cycles = 4;
             break;
 
         case 0x99: 
             sbbC();
+            cycles = 4;
             break;
 
         case 0x9a: 
             sbbD();
+            cycles = 4;
             break;
 
         case 0x9b: 
             sbbE();
+            cycles = 4;
             break;
 
         case 0x9c: 
             sbbH();
+            cycles = 4;
             break;
 
         case 0x9d: 
             sbbL();
+            cycles = 4;
             break;
 
         case 0x9e: 
             sbbM();
+            cycles = 4;
             break;
 
         case 0x9f: 
             sbbA();
+            cycles = 4;
             break;
 
         case 0xa0: 
             anaB();
+            cycles = 4;
             break;
 
         case 0xa1: 
             anaC();
+            cycles = 4;
             break;
 
         case 0xa2: 
             anaD();
+            cycles = 4;
             break;
 
         case 0xa3: 
             anaE();
+            cycles = 4;
             break;
 
         case 0xa4: 
             anaH();
+            cycles = 4;
             break;
 
         case 0xa5: 
             anaL();
+            cycles = 4;
             break;
 
         case 0xa6: 
             anaM();
+            cycles = 4;
             break;
 
         case 0xa7: 
             anaA();
+            cycles = 4;
             break;
 
         case 0xa8: 
             xraB();
+            cycles = 4;
             break;
 
         case 0xa9: 
             xraC();
+            cycles = 4;
             break;
 
         case 0xaa: 
             xraD();
+            cycles = 4;
             break;
 
         case 0xab: 
             xraE();
+            cycles = 4;
             break;
 
         case 0xac: 
             xraH();
+            cycles = 4;
             break;
 
         case 0xad: 
             xraL();
+            cycles = 4;
             break;
 
         case 0xae: 
             xraM();
+            cycles = 4;
             break;
 
         case 0xaf: 
             xraA();
+            cycles = 4;
             break;
 
         case 0xb0: 
             oraB();
+            cycles = 4;
             break;
 
         case 0xb1: 
             oraC();
+            cycles = 4;
             break;
 
         case 0xb2: 
             oraD();
+            cycles = 4;
             break;
 
         case 0xb3: 
             oraE();
+            cycles = 4;
             break;
 
         case 0xb4: 
             oraH();
+            cycles = 4;
             break;
 
         case 0xb5: 
             oraL();
+            cycles = 4;
             break;
 
         case 0xb6: 
             oraM();
+            cycles = 4;
             break;
 
         case 0xb7: 
             oraA();
+            cycles = 4;
             break;
 
         case 0xb8: 
             cmpB();
+            cycles = 4;
             break;
 
         case 0xb9: 
             cmpC();
+            cycles = 4;
             break;
 
         case 0xba: 
             cmpD();
+            cycles = 4;
             break;
 
         case 0xbb: 
             cmpE();
+            cycles = 4;
             break;
 
         case 0xbc: 
             cmpH();
+            cycles = 4;
             break;
 
         case 0xbd: 
             cmpL();
+            cycles = 4;
             break;
 
         case 0xbe: 
             cmpM();
+            cycles = 4;
             break;
 
         case 0xbf: 
             cmpA();
+            cycles = 4;
             break;
 
         case 0xc0: 
             rnz();
+            cycles = 7;
             break;
 
         case 0xc1: 
             popB();
+            cycles = 10;
             break;
 
         case 0xc2: 
             jnz();
+            cycles = 10;
             break;
 
         case 0xc3: 
             jmp();
+            cycles = 10;
             break;
 
         case 0xc4: 
             cnz();
+            cycles = 14;
             break;
 
         case 0xc5: 
             pushB();
+            cycles = 11;
             break;
 
         case 0xc6: 
             adi();
+            cycles = 7;
             break;
 
         case 0xc7: 
             rst0();
+            cycles = 11;
             break;
 
         case 0xc8: 
             rz();
+            cycles = 7;
             break;
 
         case 0xc9: 
             ret();
+            cycles = 10;
             break;
 
         case 0xca: 
             jz();
+            cycles = 10;
             break;
 
         case 0xcb: 
             nop();
+            cycles = 4;
             break;
 
         case 0xcc: 
             cz();
+            cycles = 14;
             break;
 
         case 0xcd: 
             call();
+            cycles = 17;
             break;
 
         case 0xce: 
             aci();
+            cycles = 7;
             break;
 
         case 0xcf: 
             rst1();
+            cycles = 11;
             break;
 
         case 0xd0: 
             rnc();
+            cycles = 7;
             break;
 
         case 0xd1: 
             popD();
+            cycles = 10;
             break;
 
         case 0xd2: 
             jnc();
+            cycles = 10;
             break;
 
         case 0xd3: 
             handleOUT();
+            cycles = 10;
             break;
 
         case 0xd4: 
             cnc();
+            cycles = 14;
             break;
 
         case 0xd5: 
             pushD();
+            cycles = 11;
             break;
 
         case 0xd6: 
             sui();
+            cycles = 7;
             break;
 
         case 0xd7: 
             rst2();
+            cycles = 11;
             break;
 
         case 0xd8: 
             rc();
+            cycles = 7;
             break;
 
         case 0xd9: 
             nop();
+            cycles = 4;
             break;
 
         case 0xda: 
             jc();
+            cycles = 10;
             break;
 
         case 0xdb: 
             handleIN();
+            cycles = 10;
             break;
 
         case 0xdc: 
             cc();
+            cycles = 14;
             break;
 
         case 0xdd: 
             nop();
+            cycles = 4;
             break;
 
         case 0xde: 
             sbi();
+            cycles = 7;
             break;
 
         case 0xdf: 
             rst3();
+            cycles = 11;
             break;
 
         case 0xe0: 
             rpo();
+            cycles = 7;
             break;
 
         case 0xe1: 
             popH();
+            cycles = 10;
             break;
 
         case 0xe2: 
             jpo();
+            cycles = 10;
             break;
 
         case 0xe3: 
             xthl();
+            cycles = 18;
             break;
 
         case 0xe4: 
             cpo();
+            cycles = 14;
             break;
 
         case 0xe5: 
             pushH();
+            cycles = 11;
             break;
 
         case 0xe6: 
             ani();
+            cycles = 7;
             break;
 
         case 0xe7: 
             rst4();
+            cycles = 11;
             break;
 
         case 0xe8: 
             rpe();
+            cycles = 7;
             break;
 
         case 0xe9: 
             pchl();
+            cycles = 5;
             break;
 
         case 0xea: 
             jpe();
+            cycles = 10;
             break;
 
         case 0xeb: 
             xchg();
+            cycles = 5;
             break;
 
         case 0xec: 
             cpe();
+            cycles = 14;
             break;
 
         case 0xed: 
             nop();
+            cycles = 4;
             break;
 
         case 0xee: 
             xri();
+            cycles = 7;
             break;
 
         case 0xef: 
             rst5();
+            cycles = 11;
             break;
 
         case 0xf0: 
             rp();
+            cycles = 7;
             break;
 
         case 0xf1: 
             popPSW();
+            cycles = 10;
             break;
 
         case 0xf2: 
             jp();
+            cycles = 10;
             break;
 
         case 0xf3: 
             di();
+            cycles = 4;
             break;
 
         case 0xf4: 
             cp();
+            cycles = 14;
             break;
 
         case 0xf5: 
             pushPSW();
+            cycles = 11;
             break;
 
         case 0xf6: 
             ori();
+            cycles = 7;
             break;
 
         case 0xf7: 
             rst6();
+            cycles = 11;
             break;
 
         case 0xf8: 
             rm();
+            cycles = 11;
             break;
 
         case 0xf9: 
             sphl();
+            cycles = 5;
             break;
 
         case 0xfa: 
             jm();
+            cycles = 10;
             break;
 
         case 0xfb: 
             ei();
+            cycles = 4;
             break;
 
         case 0xfc: 
             cm();
+            cycles = 14;
             break;
 
         case 0xfd: 
             nop();
+            cycles = 4;
             break;
 
         case 0xfe: 
             cpi();
+            cycles = 7;
             break;
 
         case 0xff: 
             rst7();
+            cycles = 11;
             break;
     }
+
+    return cycles;
 }
 
 ushort CPU::getPC()
 {
     return PC;
+}
+
+array<unsigned char, 0x10000>& CPU::getMemory()
+{
+    return memory;
 }
 
 unsigned char CPU::getOpcode()
@@ -1141,6 +1407,134 @@ bool CPU::evenParity(unsigned char parityByte)
     return (setCount % 2 == 0);
 }
 
+void CPU::genInterrupt(int interruptNum)
+{
+    //push PC on stack
+    memory[SP - 2] = PC & 0xff;
+    memory[SP - 1] = (PC & 0xff00) >> 8;
+    SP -= 2;
+
+    //set PC to interrupt vector
+    PC = 8 * interruptNum;
+
+    //mimic DI
+    interruptsEnabled = false;
+}
+
+void CPU::setP1Left(bool on)
+{
+    if (on)
+    {
+        //set bit 5 (P1 left) 
+        ports.read1 |= 0x20;
+    }
+    else
+    {
+        //clear bit 5 (P1 left)
+        ports.read1 &= 0xDF;
+    }
+}
+
+
+void CPU::setP2Left(bool on)
+{
+    if (on)
+    {
+        //set bit 5 (P1 left) 
+        ports.read2 |= 0x20;
+    }
+    else
+    {
+        //clear bit 5 (P1 left)
+        ports.read2 &= 0xDF;
+    }
+}
+
+void CPU::setP1Right(bool on)
+{
+    if (on)
+    {
+        //set bit 6 (P1 right) 
+        ports.read1 |= 0x40;
+    }
+    else
+    {
+        //clear bit 6 (P1 right) 
+        ports.read1 &= 0xBF;
+    }
+}
+
+void CPU::setP2Right(bool on)
+{
+    if (on)
+    {
+        //set bit 6 (P1 right) 
+        ports.read2 |= 0x40;
+    }
+    else
+    {
+        //clear bit 6 (P1 right) 
+        ports.read2 &= 0xBF;
+    }
+}
+
+
+void CPU::setP1Fire(bool on)
+{
+    if (on)
+    {
+        //set bit 4 (P1 fire) 
+        ports.read1 |= 0x10;
+    }
+    else
+    {
+        //clear bit 4 (P1 fire) 
+        ports.read1 &= 0xEF;
+    }
+}
+
+void CPU::setP1Start(bool on)
+{
+    if (on)
+    {
+        //set bit 2 (P1 start) 
+        ports.read1 |= 0x04;
+    }
+    else
+    {
+        //clear bit 2 (P1 start) 
+        ports.read1 &= 0xFB;
+    }
+}
+
+void CPU::setP2Start(bool on)
+{
+    if (on)
+    {
+        //set bit 1 (P2 start) 
+        ports.read1 |= 0x02;
+    }
+    else
+    {
+        //clear bit 1 (P2 start) 
+        ports.read1 &= 0xFD;
+    }
+}
+
+void CPU::setCoin(bool on)
+{
+    if (on)
+    {
+        //set bit 0 (coin - 0 when active) 
+        ports.read1 |= 0x01;
+    }
+    else
+    {
+        //clear bit 0 (coin)
+        ports.read1 &= 0xFE;
+    }
+}
+
 void CPU::handleIN()
 {
     unsigned char port = memory[PC + 1];
@@ -1148,12 +1542,12 @@ void CPU::handleIN()
 
     switch (port)
     {
-        case 1:
-            result = ports.read1;
+        case 0:
+            result = 1;
             break;
 
-        case 2:
-            result = ports.read2;
+        case 1:
+            result = ports.read1;
             break;
 
         case 3:
@@ -1162,7 +1556,7 @@ void CPU::handleIN()
             break;
     }
     A = result;
-    PC += 1;
+    PC += 2;
 }
 
 void CPU::handleOUT()
@@ -1181,7 +1575,7 @@ void CPU::handleOUT()
             break;
     }
 
-    PC += 1;
+    PC += 2;
 }
 
 void CPU::incPC()
