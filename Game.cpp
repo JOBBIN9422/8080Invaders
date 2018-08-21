@@ -50,7 +50,7 @@ void Game::initVideo()
     int displayHeight = displayMode.h;
     int scaleFactor = displayHeight / SCREEN_HEIGHT;
 
-    mainWin = SDL_CreateWindow("TEST", SDL_WINDOWPOS_UNDEFINED, 
+    mainWin = SDL_CreateWindow("Space Invaders", SDL_WINDOWPOS_UNDEFINED, 
                                SDL_WINDOWPOS_UNDEFINED, 
                                scaleFactor * SCREEN_HEIGHT, scaleFactor * SCREEN_WIDTH, 
                                SDL_WINDOW_SHOWN);
@@ -117,7 +117,7 @@ void Game::updateWindow()
 
     //render texture to window (flip vertically to make screen upright portrait)
     SDL_RenderClear(renderer);
-    SDL_RenderCopyEx(renderer, windowTexture, NULL, NULL, NULL, NULL, SDL_FLIP_VERTICAL);
+    SDL_RenderCopyEx(renderer, windowTexture, NULL, NULL, 0, NULL, SDL_FLIP_VERTICAL);
     SDL_RenderPresent(renderer);
 }
 
