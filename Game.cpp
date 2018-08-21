@@ -1,7 +1,7 @@
 #include "Game.h"
 using namespace std;
 
-Game::Game() : cpu(0)
+Game::Game() : cpu(0), loopUFOSound(false)
 {
     //load Space Invaders ROM
     cpu.readIntoMem("roms/invaders.h", 0);
@@ -16,26 +16,53 @@ Game::Game() : cpu(0)
     }
     else
     {
-        //get host monitor size (for window scaling)
-        SDL_DisplayMode displayMode;
-        SDL_GetCurrentDisplayMode(0, &displayMode);
-        int displayHeight = displayMode.h;
-        int scaleFactor = displayHeight / SCREEN_HEIGHT;
-
-        mainWin = SDL_CreateWindow("TEST", SDL_WINDOWPOS_UNDEFINED, 
-                                   SDL_WINDOWPOS_UNDEFINED, 
-                                   scaleFactor * SCREEN_HEIGHT, scaleFactor * SCREEN_WIDTH, 
-                                   SDL_WINDOW_SHOWN);
-
-        renderer = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
-        //maintain render aspect ratio in full-screen
-        SDL_RenderSetLogicalSize(renderer, SCREEN_HEIGHT, SCREEN_WIDTH);
-        windowTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 
-                                         SDL_TEXTUREACCESS_STATIC, SCREEN_HEIGHT, SCREEN_WIDTH);
-
-        pixelBuffer = new uint[SCREEN_WIDTH * SCREEN_HEIGHT];
-        rotatedBuffer = new uint[SCREEN_WIDTH * SCREEN_HEIGHT];
+        initVideo();
     }
+
+    if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096) < 0)
+    {
+        cout << "SDL mixer init error" << endl;
+    }
+    else
+    {
+        initSound();
+    }
+}
+
+void Game::initSound()
+{
+    for (uint i = 0; i < sounds.size(); i++)
+    {
+        string soundFile = string("sounds/") + to_string(i) + string(".wav");
+        sounds[i] = Mix_LoadWAV(soundFile.c_str());
+        if (sounds[i] == NULL)
+        {
+            cout << "warning: failure loading sound '" << i << ".wav'" << endl;
+        }
+    }
+}
+
+void Game::initVideo()
+{
+    //get host monitor size (for window scaling)
+    SDL_DisplayMode displayMode;
+    SDL_GetCurrentDisplayMode(0, &displayMode);
+    int displayHeight = displayMode.h;
+    int scaleFactor = displayHeight / SCREEN_HEIGHT;
+
+    mainWin = SDL_CreateWindow("TEST", SDL_WINDOWPOS_UNDEFINED, 
+                               SDL_WINDOWPOS_UNDEFINED, 
+                               scaleFactor * SCREEN_HEIGHT, scaleFactor * SCREEN_WIDTH, 
+                               SDL_WINDOW_SHOWN);
+
+    renderer = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
+    //maintain render aspect ratio in full-screen
+    SDL_RenderSetLogicalSize(renderer, SCREEN_HEIGHT, SCREEN_WIDTH);
+    windowTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 
+                                     SDL_TEXTUREACCESS_STATIC, SCREEN_HEIGHT, SCREEN_WIDTH);
+
+    pixelBuffer = new uint[SCREEN_WIDTH * SCREEN_HEIGHT];
+    rotatedBuffer = new uint[SCREEN_WIDTH * SCREEN_HEIGHT];
 }
 
 void Game::rotatePixelBuffer()
@@ -131,6 +158,7 @@ void Game::runCPU()
     while (catchUpCycles > cycleCount)
     {
         pollKeyboard();
+        playSounds();
         cycleCount += cpu.emulateCycle();
         //cpu.debugPrint();
     }
@@ -143,6 +171,85 @@ double Game::getTimeUsec()
     timeval time;
     gettimeofday(&time, NULL);
     return ((double)time.tv_sec * 1E6) + ((double)time.tv_usec);
+}
+
+void Game::playSounds()
+{
+    unsigned char currSoundPort3 = cpu.getSoundPort3();
+    unsigned char currSoundPort5 = cpu.getSoundPort5();
+
+    if (loopUFOSound)
+    {
+            Mix_PlayChannel(1, sounds[0], 0);
+    }
+    if (currSoundPort3 != lastSoundPort3)
+    {
+        if ((currSoundPort3 & 0x1) && !(lastSoundPort3 & 0x1))
+        {
+            //play UFO repeatedly (0.wav)
+            loopUFOSound = true;
+        }
+        else if (!(currSoundPort3 & 0x1) && (lastSoundPort3 & 0x1))
+        {
+            Mix_HaltChannel(1);
+            loopUFOSound = false;
+        }
+        
+        if ((currSoundPort3 & 0x2) && !(lastSoundPort3 & 0x2))
+        {
+            //player shot (1.wav)
+            Mix_PlayChannel(-1, sounds[1], 0);
+        }
+
+        if ((currSoundPort3 & 0x4) && !(lastSoundPort3 & 0x4))
+        {
+            //player die (2.wav)
+            Mix_PlayChannel(-1, sounds[2], 0);
+        }
+
+        if ((currSoundPort3 & 0x8) && !(lastSoundPort3 & 0x8))
+        {
+            //invader die (3.wav)
+            Mix_PlayChannel(-1, sounds[3], 0);
+        }
+
+        lastSoundPort3 = cpu.getSoundPort3();
+    }
+
+    if (currSoundPort5 != lastSoundPort5)
+    {
+        if ((currSoundPort5 & 0x1) && !(lastSoundPort5 & 0x1))
+        {
+            //play invader sound (4.wav)
+            Mix_PlayChannel(-1, sounds[4], 0);
+        }
+
+        if ((currSoundPort5 & 0x2) && !(lastSoundPort5 & 0x2))
+        {
+            //play invader sound (5.wav)
+            Mix_PlayChannel(-1, sounds[5], 0);
+        }
+
+        if ((currSoundPort5 & 0x4) && !(lastSoundPort5 & 0x4))
+        {
+            //play invader sound (6.wav)
+            Mix_PlayChannel(-1, sounds[6], 0);
+        }
+
+        if ((currSoundPort5 & 0x8) && !(lastSoundPort5 & 0x8))
+        {
+            //play invader sound (7.wav)
+            Mix_PlayChannel(-1, sounds[7], 0);
+        }
+
+        if ((currSoundPort5 & 0x10) && !(lastSoundPort5 & 0x10))
+        {
+            //play UFO hit sound (8.wav)
+            Mix_PlayChannel(-1, sounds[8], 0);
+        }
+        
+        lastSoundPort5 = cpu.getSoundPort5();
+    }
 }
 
 void Game::pollKeyboard()

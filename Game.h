@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include <sys/time.h>
 #include "CPU.h"
 
@@ -15,6 +16,14 @@ class Game
         const int SCREEN_WIDTH = 256;
         const int SCREEN_HEIGHT = 224;
 
+        //track sound state 
+        unsigned char lastSoundPort3;
+        unsigned char lastSoundPort5;
+
+        bool loopUFOSound;
+
+        std::array<Mix_Chunk*, 9> sounds;
+
         SDL_Event keyEvent;
         SDL_Window* mainWin;
         SDL_Renderer* renderer;
@@ -28,10 +37,13 @@ class Game
         void pollKeyboard();
         void copyToPixelBuffer();
 
+        void initVideo();
         void updateWindow();
         void clearPixelBuffer();
         void rotatePixelBuffer();
 
+        void initSound();
+        void playSounds();
         void runCPU();
         double getTimeUsec();
 };

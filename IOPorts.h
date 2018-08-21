@@ -6,4 +6,7 @@ struct IOPorts
     unsigned char shift0;
     unsigned char write2;
     unsigned char write4;
+
+    unsigned char sound3;
+    unsigned char sound5;
 };

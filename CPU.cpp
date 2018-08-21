@@ -1424,6 +1424,16 @@ bool CPU::getInterruptStatus()
     return this->interruptsEnabled;
 }
 
+unsigned char CPU::getSoundPort3()
+{
+    return ports.sound3;
+}
+
+unsigned char CPU::getSoundPort5()
+{
+    return ports.sound5;
+}
+
 bool CPU::evenParity(unsigned char parityByte)
 {
     int setCount = 0;
@@ -1605,6 +1615,14 @@ void CPU::handleOUT()
         case 2:
             //shift amount (3 bits)
             ports.write2 = A & 0x7;
+            break;
+
+        case 3:
+            ports.sound3 = A;
+            break;
+
+        case 5:
+            ports.sound5 = A;
             break;
 
         case 4:
