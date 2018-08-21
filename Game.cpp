@@ -16,8 +16,18 @@ Game::Game() : cpu(0)
     }
     else
     {
+        //get host monitor size (for window scaling)
+        SDL_DisplayMode displayMode;
+        SDL_GetCurrentDisplayMode(0, &displayMode);
+        int displayWidth = displayMode.w;
+        int displayHeight = displayMode.h;
+        double scaleFactor = displayHeight / SCREEN_HEIGHT;
+
         mainWin = SDL_CreateWindow("TEST", SDL_WINDOWPOS_UNDEFINED, 
-                                   SDL_WINDOWPOS_UNDEFINED, SCREEN_HEIGHT, SCREEN_WIDTH, SDL_WINDOW_SHOWN);
+                                   SDL_WINDOWPOS_UNDEFINED, 
+                                   scaleFactor * SCREEN_HEIGHT, scaleFactor * SCREEN_WIDTH, 
+                                   SDL_WINDOW_SHOWN);
+
         renderer = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
         windowTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 
                                          SDL_TEXTUREACCESS_STATIC, SCREEN_HEIGHT, SCREEN_WIDTH);

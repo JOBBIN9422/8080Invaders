@@ -106,6 +106,10 @@ void CPU::writeMem(ushort addr, unsigned char value)
 //  AnimateAlien (0x01be)
 int CPU::emulateCycle()
 {
+    if (PC == 0x798)
+    {
+        cout << "start new game" << endl;
+    }
     if (printDebugInfo)
     {
         cout << "PC = "  << setfill('0') << setw(4) << hex << PC 
@@ -4056,20 +4060,18 @@ void CPU::daa()
 
     if (flags.AC || ALow > 0x9)
     {
-        addValue = 0x6;
+        A += 0x6;
+        AHigh = A >> 4;
     }
-    if (flags.C || AHigh > 0x9 || (AHigh >= 9 && ALow > 9))
+    if (AHigh > 0x9)
     {
-        addValue = 0x60;
-        carry = true;
+        ushort result = (ushort)A + 0x60;
+        A = result & 0xff;
+        flags.Z = ((result & 0xff) == 0);
+        flags.S = ((result & 0x80) == 0x80);
+        flags.P = evenParity(result);
+        flags.C = (result > 0xff);
     }
 
-    ushort result = (ushort)A + (ushort)addValue;
-    flags.Z = (result & 0xff == 0);
-    flags.S = ((result & 0x80) == 0x80);
-    flags.P = evenParity(A);
-    flags.C = carry;
-
-    A = result;
     PC += 1;
 }

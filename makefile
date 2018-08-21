@@ -4,7 +4,7 @@ LDFLAGS = -lSDL2
 
 SOURCES = main.cpp CPU.cpp Game.cpp
 OBJECTS = $(SOURCES:.cpp = .o)
-TARGET = 8080emu
+TARGET = invaders
 
 $(TARGET) : $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
