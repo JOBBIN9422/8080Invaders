@@ -72,6 +72,8 @@ class CPU
         bool evenParity(unsigned char parityByte);
         bool getInterruptStatus();
 
+        unsigned char getSoundPort3();
+        unsigned char getSoundPort5();
         //instruction functions
         void nop();
         void lxiB();
