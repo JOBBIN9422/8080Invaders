@@ -1,0 +1,185 @@
+CPUER addr == 0x0689
+JZ - passed!
+JNC - passed!
+JPE - passed!
+JP - passed!
+JNZ - passed!
+JC - passed!
+JPO - passed!
+JM - passed!
+JMP - passed!
+JNZ(2) - passed!
+JC(2) - passed!
+JPO(2) - passed!
+JP(2) - passed!
+JPO(3) - passed!
+JM(2) - passed!
+JZ(2) - passed!
+JNC(2) - passed!
+JM(3) - passed!
+JZ(3) - passed!
+JC(3) - passed!
+JPO(4) - passed!
+JC(4) - passed!
+JZ(4) - passed!
+JPO(5) - passed!
+JM(4) - passed!
+
+last PC: 0x022a (accumulator immediate instructions)
+CPI reset carry - passed!
+CPI reset zero - passed!
+CPI reset carry (ADI) - passed!
+CPI reset zero - passed!
+
+ACI 00AH - passed!
+ACI 00AH - passed!
+
+SUI 00CH - passed! 
+SUI 00FH - passed! 
+
+ANI 055H - passed!
+ORI 03AH - passed!
+XRI 00FH - passed!
+
+CC CPUER - passed!
+CPO CPUER - passed!
+CM CPUER - passed!
+CNZ CPUER - passed!
+
+SUI 077H - passed!
+CNC CPUER - passed!
+CPE CPUER - passed!
+CP CPUER - passed!
+CZ CPUER - passed!
+JZ C030 - passed!
+CPO CPOI - passed!
+RPE - passed!
+ADI 010H - passed!
+CPE CPEI - passed!
+RPO - passed!
+CM CMI - passed!
+RP - passed!
+CP - passed!
+RM - passed!
+CNC CNCI - passed!
+RC - passed!
+CC CCI - passed!
+RNC - passed!
+CNZ CNZI - passed!
+RZ - passed!
+CZ CZI - passed!
+RNZ - passed!
+RZ - passed!
+
+JZ MOVI - passed!
+MOV A,077H - passed!
+INR A - passed!
+MOV B,A - passed!
+INR B - passed!
+MOV C,B - passed!
+DCR C - passed!
+MOV D,C - passed!
+MOV E,D - passed!
+MOV H,E - passed!
+MOV L,H - passed!
+MOV A,L - passed!
+DCR A - passed!
+MOV C,A - passed!
+MOV E,C - passed!
+MOV L,E - passed!
+MOV B,L - passed!
+MOV D,B - passed!
+MOV H,D - passed!
+MOV A,H - passed!
+MOV D,A - passed!
+INR D - passed!
+MOV L,D - passed!
+MOV C,L - passed!
+INR C - passed!
+MOV H,C - passed!
+MOV B,H - passed!
+DCR B - passed!
+MOV E,B - passed!
+MOV A,E - passed!
+MOV E,A - passed!
+INR E - passed!
+MOV B,E - passed!
+MOV H,B - passed!
+INR H - passed!
+MOV C,H - passed!
+MOV L,C - passed!
+MOV D,L - passed!
+DCR D - passed!
+MOV A,D - passed!
+MOV H,A - passed!
+DCR H - passed!
+MOV D,H - passed!
+MOV B,D - passed!
+MOV L,B - passed!
+INR L - passed!
+MOV E,L - passed!
+DCR E - passed!
+MOV C,E - passed!
+MOV A,C - passed!
+MOV L,A - passed!
+DCR L - passed!
+MOV H,L - passed!
+MOV E,H - passed!
+MOV D,E - passed!
+MOV C,D - passed!
+MOV B,C - passed!
+MOV A,B - passed!
+
+ARITHMETIC AND LOGIC TESTS (PC == 0x035c)
+ADD instructions - passed!
+SUB instructions - passed!
+ADC instructions - passed!
+SBB instructions - passed!
+ANA instructions - passed!
+ORA instructions - passed!
+XRA instructions - passed!
+MOV M,B/B,M - passed!
+MOV M,D/D,M - passed!
+MOV M,E/E,M - passed!
+MOV M,H/H,M - passed!
+MOV M,L/L,M - passed!
+MOV M,A/A.M - passed!
+ADD M - passed!
+SUB M - passed!
+ADC M - passed!
+SBB M - passed!
+ANA M - passed!
+ORA M - passed!
+XRA M - passed!
+INR/DCR/MVI M - passed!
+LXI/INX B - passed!
+LXI/INX D - passed!
+LXI/INX H - passed!
+DCX B - passed!
+DCX D - passed!
+DCX H - passed!
+LDA/STA - passed!
+LHLD/SHLD - passed!
+LDAX B - passed!
+STAX B - passed!
+LDAX D - passed!
+XCHG - passed!
+STAX D - passed!
+DAD H - passed!
+DAD B - passed!
+DAD D - passed!
+STC - passed!
+CMC - passed!
+CMA - passed!
+CMC - passed!
+RRC Rotation - passed!
+RAL Set Carry - passed!
+RAL Rotation - passed!
+RAR Reset Carry - passed!
+RAR Rotation - passed!
+PUSH/POP PSW - passed!
+PUSH/POP B - passed!
+PUSH/POP D - passed!
+PUSH/POP H - passed!
+LXI/DAD/INX/DCX SP - passed!
+SPHL/XHTL - passed! 

@@ -31,7 +31,6 @@ class CPU
 
         //64KB of memory
         std::array<unsigned char, 0x10000> memory;
-        std::array<unsigned char, 0x2000> ROMCopy;
         
 
 
@@ -72,7 +71,6 @@ class CPU
 
         bool evenParity(unsigned char parityByte);
         bool getInterruptStatus();
-        bool ROMCorrupted();
 
         //instruction functions
         void nop();

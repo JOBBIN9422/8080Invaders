@@ -4,10 +4,10 @@ using namespace std;
 Game::Game() : cpu(0)
 {
     //load Space Invaders ROM
-    cpu.readIntoMem("invaders.h", 0);
-    cpu.readIntoMem("invaders.g", 0x800);
-    cpu.readIntoMem("invaders.f", 0x1000);
-    cpu.readIntoMem("invaders.e", 0x1800);
+    cpu.readIntoMem("roms/invaders.h", 0);
+    cpu.readIntoMem("roms/invaders.g", 0x800);
+    cpu.readIntoMem("roms/invaders.f", 0x1000);
+    cpu.readIntoMem("roms/invaders.e", 0x1800);
     //cpu.copyROM();
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -19,9 +19,8 @@ Game::Game() : cpu(0)
         //get host monitor size (for window scaling)
         SDL_DisplayMode displayMode;
         SDL_GetCurrentDisplayMode(0, &displayMode);
-        int displayWidth = displayMode.w;
         int displayHeight = displayMode.h;
-        double scaleFactor = displayHeight / SCREEN_HEIGHT;
+        int scaleFactor = displayHeight / SCREEN_HEIGHT;
 
         mainWin = SDL_CreateWindow("TEST", SDL_WINDOWPOS_UNDEFINED, 
                                    SDL_WINDOWPOS_UNDEFINED, 
@@ -29,6 +28,8 @@ Game::Game() : cpu(0)
                                    SDL_WINDOW_SHOWN);
 
         renderer = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
+        //maintain render aspect ratio in full-screen
+        SDL_RenderSetLogicalSize(renderer, SCREEN_HEIGHT, SCREEN_WIDTH);
         windowTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 
                                          SDL_TEXTUREACCESS_STATIC, SCREEN_HEIGHT, SCREEN_WIDTH);
 

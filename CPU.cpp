@@ -40,13 +40,6 @@ void CPU::init()
     }
 }
 
-void CPU::copyROM()
-{
-    for (int i = 0; i < 0x2000; i++)
-    {
-        ROMCopy[i] = memory[i];
-    }
-}
 void CPU::readIntoMem(string filename, ushort startAddr)
 {
     ifstream ROMFS(filename);
@@ -1429,18 +1422,6 @@ unsigned char CPU::getByte(ushort address)
 bool CPU::getInterruptStatus()
 {
     return this->interruptsEnabled;
-}
-
-bool CPU::ROMCorrupted()
-{
-    for (int i = 0; i < ROMCopy.size(); i++)
-    {
-        if (memory[i] != ROMCopy[i])
-        {
-            return true;
-        }
-    }
-    return false;
 }
 
 bool CPU::evenParity(unsigned char parityByte)
@@ -4055,8 +4036,6 @@ void CPU::daa()
 {
     unsigned char AHigh = A >> 4;
     unsigned char ALow = A & 0x0f;
-    unsigned char addValue = 0;
-    bool carry = false;
 
     if (flags.AC || ALow > 0x9)
     {
