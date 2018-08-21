@@ -8,6 +8,7 @@ Game::Game() : cpu(0)
     cpu.readIntoMem("invaders.g", 0x800);
     cpu.readIntoMem("invaders.f", 0x1000);
     cpu.readIntoMem("invaders.e", 0x1800);
+    //cpu.copyROM();
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -16,15 +17,26 @@ Game::Game() : cpu(0)
     else
     {
         mainWin = SDL_CreateWindow("TEST", SDL_WINDOWPOS_UNDEFINED, 
-                                   SDL_WINDOWPOS_UNDEFINED, 256, 224, SDL_WINDOW_SHOWN);
+                                   SDL_WINDOWPOS_UNDEFINED, SCREEN_HEIGHT, SCREEN_WIDTH, SDL_WINDOW_SHOWN);
         renderer = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
         windowTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 
-                                         SDL_TEXTUREACCESS_STATIC, 256, 224);
-        //SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xff, 0xff, 0xff));
-        pixelBuffer = new uint[256 * 224];
+                                         SDL_TEXTUREACCESS_STATIC, SCREEN_HEIGHT, SCREEN_WIDTH);
+
+        pixelBuffer = new uint[SCREEN_WIDTH * SCREEN_HEIGHT];
+        rotatedBuffer = new uint[SCREEN_WIDTH * SCREEN_HEIGHT];
     }
 }
 
+void Game::rotatePixelBuffer()
+{
+    for (int i = 0; i < SCREEN_WIDTH; i++)
+    {
+        for (int j = 0; j < SCREEN_HEIGHT; j++)
+        {
+            rotatedBuffer[j + i * SCREEN_HEIGHT] = pixelBuffer[i + j * SCREEN_WIDTH];
+        }
+    }
+}
 void Game::copyToPixelBuffer()
 {
     array<unsigned char, 0x10000> memory = cpu.getMemory();
@@ -48,26 +60,32 @@ void Game::copyToPixelBuffer()
             currByte >>= 1;
         }
     }
-
+    //rotate the 1D pixel array to fit portrait window
+    rotatePixelBuffer();
 }
 
+void Game::clearPixelBuffer()
+{
+    for (int i = 0; i < SCREEN_HEIGHT*SCREEN_WIDTH; i++)
+    {
+        pixelBuffer[i] = 0;
+    }
+}
 void Game::updateWindow()
 {
     //update pixel buffer from CPU memory map
     copyToPixelBuffer();
-    SDL_UpdateTexture(windowTexture, NULL, pixelBuffer, 256 * sizeof(uint));
+    SDL_UpdateTexture(windowTexture, NULL, rotatedBuffer, SCREEN_HEIGHT * sizeof(uint));
 
-    //render texture to window
+    //render texture to window (flip vertically to make screen upright portrait)
     SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, windowTexture, NULL, NULL);
-    //SDL_RenderCopyEx(renderer, windowTexture, NULL, NULL, -90.0, NULL, SDL_FLIP_NONE);
+    SDL_RenderCopyEx(renderer, windowTexture, NULL, NULL, NULL, NULL, SDL_FLIP_VERTICAL);
     SDL_RenderPresent(renderer);
 }
 
 void Game::runCPU()
 {
     double now = getTimeUsec();
-    updateWindow();
 
     if (lastTimer == 0.0)
     {
@@ -79,16 +97,17 @@ void Game::runCPU()
     //graphics interrupts
     if (cpu.getInterruptStatus() && (now > nextInterrupt))
     {
-        //updateWindow();
         if (whichInterrupt == 1)
         {
             cpu.genInterrupt(1);
             whichInterrupt = 2;
+            //updateWindow();
         } 
         else
         {
             cpu.genInterrupt(2);
             whichInterrupt = 1;
+            //updateWindow();
         }
         nextInterrupt = now + 8000.0;
     }
@@ -148,6 +167,10 @@ void Game::pollKeyboard()
                         //cout << "start" << endl; 
                         cpu.setCoin(true);
                         break;
+
+                    case SDLK_TAB: 
+                        cpu.setDebug(true);
+                        break;
                 }
                 break;
 
@@ -172,6 +195,10 @@ void Game::pollKeyboard()
 
                     case SDLK_RSHIFT: 
                         cpu.setCoin(false);
+                        break;
+
+                    case SDLK_TAB: 
+                        cpu.setDebug(false);
                         break;
                 }
                 break;

@@ -1,8 +1,9 @@
 
 struct StatsRegister
 {
-    bool S;
-    bool Z;
-    bool P;
-    bool C;
+    unsigned char S;
+    unsigned char Z;
+    unsigned char P;
+    unsigned char C;
+    unsigned char AC;
 };

@@ -31,7 +31,8 @@ void CPU::init()
     this->flags.Z = 0;
     this->flags.P = 0;
     this->interruptsEnabled = true;
-
+    
+    this->printDebugInfo = false;
     //clear memory
     for (uint i = 0; i < memory.size(); i++)
     {
@@ -39,6 +40,13 @@ void CPU::init()
     }
 }
 
+void CPU::copyROM()
+{
+    for (int i = 0; i < 0x2000; i++)
+    {
+        ROMCopy[i] = memory[i];
+    }
+}
 void CPU::readIntoMem(string filename, ushort startAddr)
 {
     ifstream ROMFS(filename);
@@ -75,10 +83,36 @@ void CPU::debugPrint()
 
 }
 
+void CPU::writeMem(ushort addr, unsigned char value)
+{
+    if (addr < 0x2000) 
+    {
+        cout << "WARNING: write to ROM (addr = " << setfill('0') << setw(4) << hex << addr << ", PC = " 
+             << setfill('0') << setw(4) << PC << ")" << endl;
+        return;
+    }
+    if (addr >= 0x4000)
+    {
+        cout << "WARNING: write outside of RAM(addr = " << setfill('0') << setw(4) << hex << addr << ", PC = " 
+             << setfill('0') << setw(4) << PC << ")" << endl;
+        return;
+    }
+    memory[addr] = value;
+}
+
+//potential debug methods:
+//  SplashSprite
+//  EraseShifted
+//  AnimateAlien (0x01be)
 int CPU::emulateCycle()
 {
+    if (printDebugInfo)
+    {
+        cout << "PC = "  << setfill('0') << setw(4) << hex << PC 
+             << "\tA = " << setfill('0') << setw(2) << hex << (int)A << endl;
+    }
+
     opcode = memory[PC];
-    //debugPrint();
     int cycles = 0;
 
     switch (opcode)
@@ -280,7 +314,7 @@ int CPU::emulateCycle()
 
         //DAA instruction (implement later?)
         case 0x27: 
-            nop();
+            daa();
             cycles = 4;
             break;
 
@@ -1393,6 +1427,18 @@ bool CPU::getInterruptStatus()
     return this->interruptsEnabled;
 }
 
+bool CPU::ROMCorrupted()
+{
+    for (int i = 0; i < ROMCopy.size(); i++)
+    {
+        if (memory[i] != ROMCopy[i])
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool CPU::evenParity(unsigned char parityByte)
 {
     int setCount = 0;
@@ -1410,8 +1456,8 @@ bool CPU::evenParity(unsigned char parityByte)
 void CPU::genInterrupt(int interruptNum)
 {
     //push PC on stack
-    memory[SP - 2] = PC & 0xff;
-    memory[SP - 1] = (PC & 0xff00) >> 8;
+    writeMem(SP - 2, PC & 0xff);
+    writeMem(SP - 1, (PC & 0xff00) >> 8);
     SP -= 2;
 
     //set PC to interrupt vector
@@ -1421,6 +1467,10 @@ void CPU::genInterrupt(int interruptNum)
     interruptsEnabled = false;
 }
 
+void CPU::setDebug(bool debug)
+{
+    printDebugInfo = debug;
+}
 void CPU::setP1Left(bool on)
 {
     if (on)
@@ -1547,10 +1597,12 @@ void CPU::handleIN()
             break;
 
         case 1:
+            //inputs
             result = ports.read1;
             break;
 
         case 3:
+            //bit shift register read
             ushort v = (ports.shift1 << 8) | ports.shift0;
             result = ((v >> (8 - ports.write2)) & 0xff);
             break;
@@ -1566,10 +1618,12 @@ void CPU::handleOUT()
     switch (port)
     {
         case 2:
+            //shift amount (3 bits)
             ports.write2 = A & 0x7;
             break;
 
         case 4:
+            //shift data 
             ports.shift0 = ports.shift1;
             ports.shift1 = A;
             break;
@@ -1636,7 +1690,7 @@ void CPU::staxB()
     ushort storeAddr = (ushort)(B << 8) | C;
 
     //store accumulator in mem at address
-    memory[storeAddr] = A;
+    writeMem(storeAddr, A);
 
     PC += 1;
 }
@@ -1647,7 +1701,7 @@ void CPU::staxD()
     ushort storeAddr = (ushort)(D << 8) | E;
 
     //store accumulator in mem at address
-    memory[storeAddr] = A;
+    writeMem(storeAddr, A);
 
     PC += 1;
 }
@@ -1655,7 +1709,7 @@ void CPU::staxD()
 void CPU::sta()
 {
     ushort storeAddr = (ushort)(memory[PC + 2] << 8) | memory[PC + 1];
-    memory[storeAddr] = A;
+    writeMem(storeAddr, A);
 
     PC += 3;
 }
@@ -1889,7 +1943,7 @@ void CPU::inrM()
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
 
-    memory[HLAddr] = result;
+    writeMem(HLAddr, result);
     PC += 1;
 }
 
@@ -2006,7 +2060,7 @@ void CPU::dcrM()
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
 
-    memory[HLAddr] = result;
+    writeMem(HLAddr, result);
     PC += 1;
 }
 
@@ -2072,7 +2126,7 @@ void CPU::mviM()
     ushort HLAddr = (ushort)(H << 8) | L;
     unsigned char storeByte = memory[PC + 1];
 
-    memory[HLAddr] = storeByte;
+    writeMem(HLAddr, storeByte);
     PC += 2;
 }
 
@@ -2129,10 +2183,10 @@ void CPU::rar()
     unsigned char prevA = A;
 
     //shift A right by one and set MSB to MSB of A before shift
-    A = (prevA & 0x80) | (prevA >> 1);
+    A = (flags.C << 7) | (prevA >> 1);
 
     //set carry bit to LSB of A before shift
-    flags.C = ((prevA & 0x1) != 0);
+    flags.C = ((prevA & 0x1) == 1);
     PC += 1;
 }
 
@@ -2206,8 +2260,8 @@ void CPU::shld()
 {
     //load address from immediate bytes in little-endian format
     ushort storeAddr = (ushort)(memory[PC + 2] << 8) | memory[PC + 1];
-    memory[storeAddr] = L;
-    memory[storeAddr + 1] = H;
+    writeMem(storeAddr, L);
+    writeMem(storeAddr + 1, H);
 
     PC += 3;
 }
@@ -2549,49 +2603,49 @@ void CPU::movLA()
 void CPU::movMB()
 {
     ushort HLAddr = (ushort)(H << 8) | L;
-    memory[HLAddr] = B;
+    writeMem(HLAddr, B);
     PC += 1;
 }
 
 void CPU::movMC()
 {
     ushort HLAddr = (ushort)(H << 8) | L;
-    memory[HLAddr] = C;
+    writeMem(HLAddr, C);
     PC += 1;
 }
 
 void CPU::movMD()
 {
     ushort HLAddr = (ushort)(H << 8) | L;
-    memory[HLAddr] = D;
+    writeMem(HLAddr, D);
     PC += 1;
 }
 
 void CPU::movME()
 {
     ushort HLAddr = (ushort)(H << 8) | L;
-    memory[HLAddr] = E;
+    writeMem(HLAddr, E);
     PC += 1;
 }
 
 void CPU::movMH()
 {
     ushort HLAddr = (ushort)(H << 8) | L;
-    memory[HLAddr] = H;
+    writeMem(HLAddr, H);
     PC += 1;
 }
 
 void CPU::movML()
 {
     ushort HLAddr = (ushort)(H << 8) | L;
-    memory[HLAddr] = L;
+    writeMem(HLAddr, L);
     PC += 1;
 }
 
 void CPU::movMA()
 {
     ushort HLAddr = (ushort)(H << 8) | L;
-    memory[HLAddr] = A;
+    writeMem(HLAddr, A);
     PC += 1;
 }
 
@@ -3420,7 +3474,7 @@ void CPU::cmpB()
     flags.Z = ((result & 0xff) == 0);
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
-    flags.C = 0; 
+    flags.C = (result > 0xff); 
 
     PC += 1;
 }
@@ -3431,7 +3485,7 @@ void CPU::cmpC()
     flags.Z = ((result & 0xff) == 0);
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
-    flags.C = 0; 
+    flags.C = (result > 0xff); 
 
     PC += 1;
 }
@@ -3442,7 +3496,7 @@ void CPU::cmpD()
     flags.Z = ((result & 0xff) == 0);
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
-    flags.C = 0; 
+    flags.C = (result > 0xff); 
 
     PC += 1;
 }
@@ -3453,7 +3507,7 @@ void CPU::cmpE()
     flags.Z = ((result & 0xff) == 0);
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
-    flags.C = 0; 
+    flags.C = (result > 0xff); 
 
     PC += 1;
 }
@@ -3464,7 +3518,7 @@ void CPU::cmpH()
     flags.Z = ((result & 0xff) == 0);
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
-    flags.C = 0; 
+    flags.C = (result > 0xff); 
 
     PC += 1;
 }
@@ -3475,7 +3529,7 @@ void CPU::cmpL()
     flags.Z = ((result & 0xff) == 0);
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
-    flags.C = 0; 
+    flags.C = (result > 0xff); 
 
     PC += 1;
 }
@@ -3487,7 +3541,7 @@ void CPU::cmpM()
     flags.Z = ((result & 0xff) == 0);
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
-    flags.C = 0; 
+    flags.C = (result > 0xff); 
 
     PC += 1;
 }
@@ -3498,7 +3552,7 @@ void CPU::cmpA()
     flags.Z = ((result & 0xff) == 0);
     flags.S = ((result & 0x80) == 0x80);
     flags.P = evenParity(result);
-    flags.C = 0; 
+    flags.C = (result > 0xff); 
 
     PC += 1;
 }
@@ -3568,13 +3622,13 @@ void CPU::popPSW()
 
 void CPU::pushPSW()
 {
-    memory[SP - 1] = A;
+    writeMem(SP - 1, A);
     unsigned char PSW  = (flags.Z | 
                           flags.S << 1 |
                           flags.P << 2 |
                           flags.C << 3 |
                           0);
-    memory[SP - 2] = PSW;
+    writeMem(SP - 2, PSW);
 
     SP -= 2;
     PC += 1;
@@ -3582,24 +3636,24 @@ void CPU::pushPSW()
 
 void CPU::pushB()
 {
-    memory[SP - 2] = C;
-    memory[SP - 1] = B;
+    writeMem(SP - 2, C);
+    writeMem(SP - 1, B);
     SP -= 2;
     PC += 1;
 }
 
 void CPU::pushD()
 {
-    memory[SP - 2] = E;
-    memory[SP - 1] = D;
+    writeMem(SP - 2, E);
+    writeMem(SP - 1, D);
     SP -= 2;
     PC += 1;
 }
 
 void CPU::pushH()
 {
-    memory[SP - 2] = L;
-    memory[SP - 1] = H;
+    writeMem(SP - 2, L);
+    writeMem(SP - 1, H);
     SP -= 2;
     PC += 1;
 }
@@ -3758,8 +3812,8 @@ void CPU::call()
 {
     //store the start address of the next instruction on stack
     ushort returnAddr = PC + 3;
-    memory[SP - 1] = (unsigned char)((returnAddr >> 8) & 0xff);
-    memory[SP - 2] = (unsigned char)(returnAddr & 0x00ff);
+    writeMem(SP - 1, (unsigned char)((returnAddr >> 8) & 0xff));
+    writeMem(SP - 2, (unsigned char)(returnAddr & 0x00ff));
     SP -= 2;
     PC = (memory[PC + 2] << 8) | memory[PC + 1];
 }
@@ -3773,64 +3827,64 @@ void CPU::ret()
 
 void CPU::rst0()
 {
-    memory[SP - 1] = (unsigned char)((PC >> 8) & 0xff);
-    memory[SP - 2] = (unsigned char)(PC & 0x00ff);
+    writeMem(SP - 1, (unsigned char)((PC >> 8) & 0xff));
+    writeMem(SP - 2, (unsigned char)(PC & 0x00ff));
     SP -= 2;
     PC = 0x0;
 }
 
 void CPU::rst1()
 {
-    memory[SP - 1] = (unsigned char)((PC >> 8) & 0xff);
-    memory[SP - 2] = (unsigned char)(PC & 0x00ff);
+    writeMem(SP - 1, (unsigned char)((PC >> 8) & 0xff));
+    writeMem(SP - 2, (unsigned char)(PC & 0x00ff));
     SP -= 2;
     PC = 0x8;
 }
 
 void CPU::rst2()
 {
-    memory[SP - 1] = (unsigned char)((PC >> 8) & 0xff);
-    memory[SP - 2] = (unsigned char)(PC & 0x00ff);
+    writeMem(SP - 1, (unsigned char)((PC >> 8) & 0xff));
+    writeMem(SP - 2, (unsigned char)(PC & 0x00ff));
     SP -= 2;
     PC = 0x10;
 }
 
 void CPU::rst3()
 {
-    memory[SP - 1] = (unsigned char)((PC >> 8) & 0xff);
-    memory[SP - 2] = (unsigned char)(PC & 0x00ff);
+    writeMem(SP - 1, (unsigned char)((PC >> 8) & 0xff));
+    writeMem(SP - 2, (unsigned char)(PC & 0x00ff));
     SP -= 2;
     PC = 0x18;
 }
 
 void CPU::rst4()
 {
-    memory[SP - 1] = (unsigned char)((PC >> 8) & 0xff);
-    memory[SP - 2] = (unsigned char)(PC & 0x00ff);
+    writeMem(SP - 1, (unsigned char)((PC >> 8) & 0xff));
+    writeMem(SP - 2, (unsigned char)(PC & 0x00ff));
     SP -= 2;
     PC = 0x20;
 }
 
 void CPU::rst5()
 {
-    memory[SP - 1] = (unsigned char)((PC >> 8) & 0xff);
-    memory[SP - 2] = (unsigned char)(PC & 0x00ff);
+    writeMem(SP - 1, (unsigned char)((PC >> 8) & 0xff));
+    writeMem(SP - 2, (unsigned char)(PC & 0x00ff));
     SP -= 2;
     PC = 0x28;
 }
 
 void CPU::rst6()
 {
-    memory[SP - 1] = (unsigned char)((PC >> 8) & 0xff);
-    memory[SP - 2] = (unsigned char)(PC & 0x00ff);
+    writeMem(SP - 1, (unsigned char)((PC >> 8) & 0xff));
+    writeMem(SP - 2, (unsigned char)(PC & 0x00ff));
     SP -= 2;
     PC = 0x30;
 }
 
 void CPU::rst7()
 {
-    memory[SP - 1] = (unsigned char)((PC >> 8) & 0xff);
-    memory[SP - 2] = (unsigned char)(PC & 0x00ff);
+    writeMem(SP - 1, (unsigned char)((PC >> 8) & 0xff));
+    writeMem(SP - 2, (unsigned char)(PC & 0x00ff));
     SP -= 2;
     PC = 0x38;
 }
@@ -3945,11 +3999,11 @@ void CPU::cpi()
 void CPU::xthl()
 {
     unsigned char temp = memory[SP];
-    memory[SP] = L;
+    writeMem(SP, L);
     L = temp;
 
     temp = memory[SP + 1];
-    memory[SP + 1] = H;
+    writeMem(SP + 1, H);
     H = temp;
 
     PC += 1;
@@ -3990,5 +4044,32 @@ void CPU::ei()
 void CPU::di()
 {
     interruptsEnabled = false;
+    PC += 1;
+}
+
+void CPU::daa()
+{
+    unsigned char AHigh = A >> 4;
+    unsigned char ALow = A & 0x0f;
+    unsigned char addValue = 0;
+    bool carry = false;
+
+    if (flags.AC || ALow > 0x9)
+    {
+        addValue = 0x6;
+    }
+    if (flags.C || AHigh > 0x9 || (AHigh >= 9 && ALow > 9))
+    {
+        addValue = 0x60;
+        carry = true;
+    }
+
+    ushort result = (ushort)A + (ushort)addValue;
+    flags.Z = (result & 0xff == 0);
+    flags.S = ((result & 0x80) == 0x80);
+    flags.P = evenParity(A);
+    flags.C = carry;
+
+    A = result;
     PC += 1;
 }

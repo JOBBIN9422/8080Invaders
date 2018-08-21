@@ -27,9 +27,11 @@ class CPU
         StatsRegister flags;
         IOPorts ports;
         bool interruptsEnabled;
+        bool printDebugInfo;
 
         //64KB of memory
         std::array<unsigned char, 0x10000> memory;
+        std::array<unsigned char, 0x2000> ROMCopy;
         
 
 
@@ -41,6 +43,7 @@ class CPU
         void readIntoMem(std::string filename, ushort startAddr);
         void incPC();
 
+        void copyROM();
         std::array<unsigned char, 0x10000>& getMemory();
 
         void handleIN();
@@ -54,7 +57,10 @@ class CPU
         void setP1Start(bool on);
         void setP2Start(bool on);
         void setCoin(bool on);
+        void setDebug(bool debug);
 
+
+        void writeMem(ushort addr, unsigned char value);
         void genInterrupt(int interruptNum);
 
         void debugPrint();
@@ -66,6 +72,7 @@ class CPU
 
         bool evenParity(unsigned char parityByte);
         bool getInterruptStatus();
+        bool ROMCorrupted();
 
         //instruction functions
         void nop();
@@ -288,6 +295,7 @@ class CPU
         void ret();
         void rlc();
         void rrc();
+        void daa();
         void dadB();
         void dadD();
         void dadH();
