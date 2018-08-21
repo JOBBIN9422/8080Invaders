@@ -21,6 +21,7 @@ class Game
         unsigned char lastSoundPort5;
 
         bool loopUFOSound;
+        bool exit;
 
         std::array<Mix_Chunk*, 9> sounds;
 
@@ -46,4 +47,6 @@ class Game
         void playSounds();
         void runCPU();
         double getTimeUsec();
+
+        bool isRunning();
 };

@@ -7,10 +7,12 @@ using namespace std;
 int main(int argc, char* args[])
 {
     Game game;
-    for (;;)
+    while (game.isRunning())
     {
         game.runCPU();
         game.updateWindow();
         usleep(1000);
     }
+
+    return 0;
 }

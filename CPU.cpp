@@ -99,10 +99,6 @@ void CPU::writeMem(ushort addr, unsigned char value)
 //  AnimateAlien (0x01be)
 int CPU::emulateCycle()
 {
-    if (PC == 0x798)
-    {
-        cout << "start new game" << endl;
-    }
     if (printDebugInfo)
     {
         cout << "PC = "  << setfill('0') << setw(4) << hex << PC 

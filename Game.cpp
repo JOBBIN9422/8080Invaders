@@ -1,7 +1,7 @@
 #include "Game.h"
 using namespace std;
 
-Game::Game() : cpu(0), loopUFOSound(false)
+Game::Game() : cpu(0), loopUFOSound(false), exit(false)
 {
     //load Space Invaders ROM
     cpu.readIntoMem("roms/invaders.h", 0);
@@ -29,6 +29,10 @@ Game::Game() : cpu(0), loopUFOSound(false)
     }
 }
 
+bool Game::isRunning()
+{
+    return !exit;
+}
 void Game::initSound()
 {
     for (uint i = 0; i < sounds.size(); i++)
@@ -288,6 +292,11 @@ void Game::pollKeyboard()
 
                     case SDLK_TAB: 
                         cpu.setDebug(true);
+                        break;
+
+                    case SDLK_ESCAPE: 
+                        SDL_Quit();
+                        exit = true;
                         break;
                 }
                 break;
