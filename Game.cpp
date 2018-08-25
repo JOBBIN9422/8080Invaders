@@ -66,44 +66,36 @@ void Game::initVideo()
                                      SDL_TEXTUREACCESS_STATIC, SCREEN_HEIGHT, SCREEN_WIDTH);
 
     pixelBuffer = new uint[SCREEN_WIDTH * SCREEN_HEIGHT];
-    rotatedBuffer = new uint[SCREEN_WIDTH * SCREEN_HEIGHT];
 }
 
-void Game::rotatePixelBuffer()
-{
-    for (int i = 0; i < SCREEN_WIDTH; i++)
-    {
-        for (int j = 0; j < SCREEN_HEIGHT; j++)
-        {
-            rotatedBuffer[j + i * SCREEN_HEIGHT] = pixelBuffer[i + j * SCREEN_WIDTH];
-        }
-    }
-}
 void Game::copyToPixelBuffer()
 {
     array<unsigned char, 0x10000> memory = cpu.getMemory();
-    int pixelIndex = 0; 
+    int buffIndex = 0;
+    int bitShift = 0x1;
 
-    for (int i = 0x2400; i < 0x3fff; i++)
+    for (int i = 0x2400; i < 0x2420; i++)
     {
-        unsigned char currByte = memory[i];
-        //loop through the 8 bits (pixels) of the current byte 
-        for (int j = 0; j < 8; j++)
+        for (int p = 0; p < 8; p++)
         {
-            if (currByte & 0x01)
+            for (int j = 0; j < SCREEN_HEIGHT; j++)
             {
-                pixelBuffer[pixelIndex] = 0xFFFFFFFF;
+                int addr = 32 * j + i;
+                unsigned char currByte = memory[addr];
+
+                if ((currByte & bitShift) == bitShift)
+                {
+                    pixelBuffer[buffIndex++] = 0xffffffff;
+                }
+                else
+                {
+                    pixelBuffer[buffIndex++] = 0x0;
+                }
             }
-            else
-            {
-                pixelBuffer[pixelIndex] = 0;
-            }
-            pixelIndex++;
-            currByte >>= 1;
+            bitShift <<= 1;
         }
+        bitShift = 0x1;
     }
-    //rotate the 1D pixel array to fit portrait window
-    rotatePixelBuffer();
 }
 
 void Game::clearPixelBuffer()
@@ -117,7 +109,7 @@ void Game::updateWindow()
 {
     //update pixel buffer from CPU memory map
     copyToPixelBuffer();
-    SDL_UpdateTexture(windowTexture, NULL, rotatedBuffer, SCREEN_HEIGHT * sizeof(uint));
+    SDL_UpdateTexture(windowTexture, NULL, pixelBuffer, SCREEN_HEIGHT * sizeof(uint));
 
     //render texture to window (flip vertically to make screen upright portrait)
     SDL_RenderClear(renderer);

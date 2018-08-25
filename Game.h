@@ -31,7 +31,6 @@ class Game
         SDL_Texture* windowTexture;
         SDL_Rect flipRect;
         uint* pixelBuffer;
-        uint* rotatedBuffer;
 
     public:
         Game();
