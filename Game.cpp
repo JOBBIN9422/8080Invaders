@@ -153,8 +153,6 @@ void Game::runCPU()
 
     while (catchUpCycles > cycleCount)
     {
-        pollKeyboard();
-        playSounds();
         cycleCount += cpu.emulateCycle();
         //cpu.debugPrint();
     }
